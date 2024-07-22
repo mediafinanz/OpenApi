@@ -354,7 +354,7 @@ class PsrRequest implements ServerRequestInterface
      */
     public function getHeader($sHeaderName)
     {
-        return (array) get($this->getHeaders()[$sHeaderName], array());
+        return (array) Request::getHeaderValueOnKey($sHeaderName);
     }
 
     /**

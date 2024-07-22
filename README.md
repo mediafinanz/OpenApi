@@ -6,7 +6,7 @@
 - Linux
 - php >= 8
   - `pdo` extension
-- Emvicy 1.x
+- Emvicy 1.x >= `1.13`
   - see [https://emvicy.com/1.x/installation](https://emvicy.com/1.x/installation)
 
 ---
