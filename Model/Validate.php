@@ -28,7 +28,7 @@ class Validate
      * @example {"bSuccess":false,"aMessage":[],"aValidationResult":[{"name":"data.1.contact.city","code":"error_type","value":123,"in":"body","expected":"string","used":"integer"}]}
      * @example {"bSuccess":true,"aMessage":[],"aValidationResult":[]}
      */
-    public static function request(DTRequestCurrent $oDTRequestCurrent = null, $sYamlSource = '')
+    public static function request(?DTRequestCurrent $oDTRequestCurrent = null, $sYamlSource = '')
     {
         // Response
         $oDTValidateRequestResponse = DTValidateRequestResponse::create();
