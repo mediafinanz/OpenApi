@@ -1,6 +1,6 @@
 <?php
 
-namespace OpenApi\Model;
+namespace OpenApi\Model\Model;
 
 use HKarlstrom\Middleware\OpenApiValidation;
 use HKarlstrom\Middleware\OpenApiValidation\Exception\FileNotFoundException;
@@ -12,23 +12,25 @@ use MVC\DataType\DTRequestCurrent;
 use MVC\Error;
 use MVC\Event;
 use MVC\File;
+use MVC\Log;
 use MVC\Request;
 use MVC\Route;
 use MVC\Strings;
 use OpenApi\DataType\DTValidateMessage;
 use OpenApi\DataType\DTValidateRequestResponse;
+use OpenApi\Model\Model\Validator\Binary;
 
 class Validate
 {
     /**
      * @param \MVC\DataType\DTRequestCurrent|null $oDTRequestCurrent
-     * @param                                     $sYamlSource file | URL
+     * @param string                              $sYamlSource file|url
      * @return \OpenApi\DataType\DTValidateRequestResponse
      * @throws \ReflectionException
      * @example {"bSuccess":false,"aMessage":[],"aValidationResult":[{"name":"data.1.contact.city","code":"error_type","value":123,"in":"body","expected":"string","used":"integer"}]}
      * @example {"bSuccess":true,"aMessage":[],"aValidationResult":[]}
      */
-    public static function request(?DTRequestCurrent $oDTRequestCurrent = null, $sYamlSource = '')
+    public static function request(?DTRequestCurrent $oDTRequestCurrent = null, string $sYamlSource = '')
     {
         // Response
         $oDTValidateRequestResponse = DTValidateRequestResponse::create();
@@ -36,11 +38,7 @@ class Validate
         // $sYamlSource missing
         if (true === empty($sYamlSource))
         {
-            $oDTValidateRequestResponse = self::sYamlSourceFail(
-                $oDTValidateRequestResponse,
-                $sYamlSource,
-                'no $sYamlSource passed; string parameter is empty'
-            );
+            $oDTValidateRequestResponse = self::sYamlSourceFail($oDTValidateRequestResponse, $sYamlSource, 'no $sYamlSource passed; string parameter is empty');
         }
 
         // Fallback
@@ -49,15 +47,13 @@ class Validate
             $sMessage = 'no object of type DTRequestCurrent passed; creating object DTRequestCurrent on Request::getCurrentRequest()';
             Error::notice($sMessage);
             $oDTRequestCurrent = Request::getCurrentRequest();
-            $oDTValidateRequestResponse->add_aMessage(
-                DTValidateMessage::create()
-                    ->set_sSubject('Notice')
-                    ->set_sBody($sMessage)
-            );
+            $oDTValidateRequestResponse->add_aMessage(DTValidateMessage::create()
+                ->set_sSubject('Notice')
+                ->set_sBody($sMessage));
         }
 
         // $sYamlSource is URL: download and save to cache
-        if (true === (boolean) filter_var($sYamlSource, FILTER_VALIDATE_URL))
+        if (true === (boolean)filter_var($sYamlSource, FILTER_VALIDATE_URL))
         {
             $sYamlSource = self::saveAsFile($sYamlSource);
         }
@@ -67,38 +63,32 @@ class Validate
         // $sYamlSource is file, but missing
         if (false === file_exists($sYamlSource))
         {
-            $oDTValidateRequestResponse = self::sYamlSourceFail(
-                $oDTValidateRequestResponse,
-                $sYamlSource,
-                'file does not exist: `' . $sYamlSource . '`'
-            );
+            $oDTValidateRequestResponse = self::sYamlSourceFail($oDTValidateRequestResponse, $sYamlSource, 'file does not exist: `' . $sYamlSource . '`');
         }
 
         // check request method
-        $bMethodsMatch = (Request::getCurrentRequest()->get_requestmethod() === Route::getCurrent()->get_method());
+        $bMethodsMatch = (Request::getCurrentRequest()
+                              ->get_requestmethod() === Route::getCurrent()
+                              ->get_method());
 
         if (false === $bMethodsMatch)
         {
-            $sMessage = 'wrong request method `' . $oDTRequestCurrent->get_requestmethod() . '`. It has to be: `' . Route::getCurrent()->get_method() . '`';
+            $sMessage = 'wrong request method `' . $oDTRequestCurrent->get_requestmethod() . '`. It has to be: `' . Route::getCurrent()
+                    ->get_method() . '`';
             Error::notice($sMessage);
-            $oDTValidateRequestResponse
-                ->set_bSuccess(false)
-                ->add_aMessage(
-                    DTValidateMessage::create()
-                        ->set_sSubject('Notice')
-                        ->set_sBody($sMessage)
-                );
+            $oDTValidateRequestResponse->set_bSuccess(false)
+                ->add_aMessage(DTValidateMessage::create()
+                    ->set_sSubject('Notice')
+                    ->set_sBody($sMessage));
 
             return $oDTValidateRequestResponse;
         }
 
         // check the request content type...
-        try {
+        try
+        {
             $oOpenApiReader = new OpenApiReader($sYamlSource);
-            $oRequestBody = $oOpenApiReader->getOperationRequestBody(
-                $oDTRequestCurrent->get_path(),
-                strtolower($oDTRequestCurrent->get_requestmethod())
-            );
+            $oRequestBody = $oOpenApiReader->getOperationRequestBody($oDTRequestCurrent->get_path(), strtolower($oDTRequestCurrent->get_requestmethod()));
 
             // ...if there is any content body
             if (null !== $oRequestBody)
@@ -107,86 +97,85 @@ class Validate
                 $sExpectedType = $oRequestBody->getContent()->type;
 
                 // check content type "json"
-                if (true === (boolean) stristr($sExpectedType, 'json') && false === Strings::isJson($oDTRequestCurrent->get_input()))
+                if (true === (boolean)stristr($sExpectedType, 'json') && false === Strings::isJson($oDTRequestCurrent->get_input()))
                 {
                     $sMessage = 'content type has to be valid `' . $sExpectedType . '`';
                     Error::error(json_last_error_msg() . ' on RequestBody of ' . $oDTRequestCurrent->get_path() . ': ' . $sMessage);
                     Error::notice('abort validation of request due to error');
-                    $oDTValidateRequestResponse
-                        ->set_bSuccess(false)
-                        ->add_aMessage(
-                            DTValidateMessage::create()
-                                ->set_sSubject('Error')
-                                ->set_sBody(json_last_error_msg())
-                        )
-                        ->add_aMessage(
-                            DTValidateMessage::create()
-                                ->set_sSubject('Notice')
-                                ->set_sBody($sMessage)
-                        );
+                    $oDTValidateRequestResponse->set_bSuccess(false)
+                        ->add_aMessage(DTValidateMessage::create()
+                            ->set_sSubject('Error')
+                            ->set_sBody(json_last_error_msg()))
+                        ->add_aMessage(DTValidateMessage::create()
+                            ->set_sSubject('Notice')
+                            ->set_sBody($sMessage));
 
                     return $oDTValidateRequestResponse;
                 }
             }
-        } catch (\Exception $oException) {
+        }
+        catch (\Exception $oException)
+        {
             Error::exception($oException->getMessage());
             Error::notice('abort validation of request due to exception');
-            $oDTValidateRequestResponse
-                ->set_bSuccess(false)
-                ->add_aMessage(
-                    DTValidateMessage::create()
-                        ->set_sSubject('Exception')
-                        ->set_sBody($oException->getMessage())
-                );
+            $oDTValidateRequestResponse->set_bSuccess(false)
+                ->add_aMessage(DTValidateMessage::create()
+                    ->set_sSubject('Exception')
+                    ->set_sBody($oException->getMessage()));
 
             return $oDTValidateRequestResponse;
         }
 
         // OpenApiValidation
-        try {
-            $oOpenApiValidation = new OpenApiValidation($sYamlSource);
-        } catch (FileNotFoundException $oFileNotFoundException) {
+        try
+        {
+            $oOpenApiValidation = new OpenApiValidation($sYamlSource, [
+                    'missingFormatException' => true,
+                ]);
+
+            // Custom Format
+            $oOpenApiValidation->addFormat('string', 'binary', new Binary());
+        }
+        catch (FileNotFoundException $oFileNotFoundException)
+        {
             Error::exception($oFileNotFoundException->getMessage());
             Error::notice('abort validation of request due to exception');
-            $oDTValidateRequestResponse
-                ->set_bSuccess(false)
-                ->add_aMessage(
-                    DTValidateMessage::create()
-                        ->set_sSubject('Exception')
-                        ->set_sBody($oFileNotFoundException->getMessage())
-                );
+            $oDTValidateRequestResponse->set_bSuccess(false)
+                ->add_aMessage(DTValidateMessage::create()
+                    ->set_sSubject('Exception')
+                    ->set_sBody($oFileNotFoundException->getMessage()));
 
             return $oDTValidateRequestResponse;
-        } catch (InvalidOptionException $oInvalidOptionException) {
+        }
+        catch (InvalidOptionException $oInvalidOptionException)
+        {
             Error::exception($oInvalidOptionException->getMessage());
             Error::notice('abort validation of request due to exception');
-            $oDTValidateRequestResponse
-                ->set_bSuccess(false)
-                ->add_aMessage(
-                    DTValidateMessage::create()
-                        ->set_sSubject('Exception')
-                        ->set_sBody($oInvalidOptionException->getMessage())
-                );
+            $oDTValidateRequestResponse->set_bSuccess(false)
+                ->add_aMessage(DTValidateMessage::create()
+                    ->set_sSubject('Exception')
+                    ->set_sBody($oInvalidOptionException->getMessage()));
 
             return $oDTValidateRequestResponse;
         }
 
         // requirement: it has to be Psr7
         $oPsrRequest = new PsrRequest($oDTRequestCurrent);
-        $aValidationResult = $oOpenApiValidation->validateRequest(
-        // PSR7 Request Object
-            $oPsrRequest,
-            // path as expected in route
-            Route::getCurrent()->get_path(),
-            // Request Method; has to be lowercase
-            strtolower(Route::getCurrent()->get_method()),
-            // remove "_tail" from PathParam Array
-            $oPsrRequest->withoutAttribute('_tail')
-        );
+        try
+        {
+            $aValidationResult = $oOpenApiValidation->validateRequest(// PSR7 Request Object
+                $oPsrRequest, // path as expected in route
+                Route::getCurrent()->get_path(), // Request Method; has to be lowercase
+                strtolower(Route::getCurrent()->get_method()), // remove "_tail" from PathParam Array
+                $oPsrRequest->withoutAttribute('_tail')
+            );
+        }
+        catch (\Exception $oException)
+        {
+            Log::write($oException->getMessage(), 'error.log');
+        }
 
-        $oDTValidateRequestResponse
-            ->set_bSuccess((true === empty($aValidationResult)))
-            ->set_aValidationResult($aValidationResult);
+        $oDTValidateRequestResponse->set_bSuccess((true === empty($aValidationResult)))->set_aValidationResult($aValidationResult);
 
         return $oDTValidateRequestResponse;
     }
@@ -200,8 +189,8 @@ class Validate
     {
         $iStrLength = 30;
         $sString = substr(Strings::seofy($sYamlUrl), 0, $iStrLength);
-        $sString = str_pad($sString,  $iStrLength, '-');
-        $sString.= '.' . md5(base64_encode($sYamlUrl));
+        $sString = str_pad($sString, $iStrLength, '-');
+        $sString .= '.' . md5(base64_encode($sYamlUrl));
         $sCacheFileAbs = File::secureFilePath(Config::get_MVC_CACHE_DIR() . '/' . $sString . '.yaml');
 
         Cache::autoDeleteCache($sCacheFileAbs);
@@ -230,13 +219,10 @@ class Validate
     protected static function sYamlSourceFail(DTValidateRequestResponse $oDTValidateRequestResponse, string $sYamlSource = '', string $sMessage = '')
     {
         Error::error($sMessage);
-        $oDTValidateRequestResponse
-            ->set_bSuccess(false)
-            ->add_aMessage(
-                DTValidateMessage::create()
-                    ->set_sSubject('Error')
-                    ->set_sBody($sMessage)
-            );
+        $oDTValidateRequestResponse->set_bSuccess(false)
+            ->add_aMessage(DTValidateMessage::create()
+                ->set_sSubject('Error')
+                ->set_sBody($sMessage));
 
         return $oDTValidateRequestResponse;
     }
