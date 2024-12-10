@@ -1,6 +1,6 @@
 <?php
 
-namespace OpenApi\Model\Model;
+namespace OpenApi\Model;
 
 use HKarlstrom\Middleware\OpenApiValidation;
 use HKarlstrom\Middleware\OpenApiValidation\Exception\FileNotFoundException;
@@ -18,7 +18,7 @@ use MVC\Route;
 use MVC\Strings;
 use OpenApi\DataType\DTValidateMessage;
 use OpenApi\DataType\DTValidateRequestResponse;
-use OpenApi\Model\Model\Validator\Binary;
+use OpenApi\Model\Validator\Binary;
 
 class Validate
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace OpenApi\Model\Model\Validator;
+namespace OpenApi\Model\Validator;
 
 use Opis\JsonSchema\Format;
 
