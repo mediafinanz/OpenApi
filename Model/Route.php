@@ -43,8 +43,7 @@ class Route
 
                 \MVC\Route::$sRouteMethod(
                     $sPath,
-                    $sClass . '::' . ((false === empty($sClassMethod)) ? $sClassMethod : $sOperationId),
-                    $sOpenApiFileAbs
+                    $sClass . '::' . ((false === empty($sClassMethod)) ? $sClassMethod : $sOperationId)
                 );
             }
         }

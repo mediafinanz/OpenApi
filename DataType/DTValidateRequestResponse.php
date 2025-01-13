@@ -1,5 +1,4 @@
 <?php
-# 2024-02-03 17:32:15
 
 /**
  * @name $OpenApiDataType
@@ -35,42 +34,33 @@ class DTValidateRequestResponse
 
 	/**
 	 * DTValidateRequestResponse constructor.
-	 * @param array $aData
+	 * @param DTValue $oDTValue
 	 * @throws \ReflectionException 
 	 */
-	public function __construct(array $aData = array())
+	protected function __construct(DTValue $oDTValue)
 	{
-		$oDTValue = DTValue::create()->set_mValue($aData);
 		\MVC\Event::run('DTValidateRequestResponse.__construct.before', $oDTValue);
 		$aData = $oDTValue->get_mValue();
-
 		$this->bSuccess = false;
-		$this->aMessage = array();
+		$this->aMessage = [];
 		$this->aValidationResult = null;
+		$this->setProperties($oDTValue);
 
-		foreach ($aData as $sKey => $mValue)
-		{
-			$sMethod = 'set_' . $sKey;
-
-			if (method_exists($this, $sMethod))
-			{
-				$this->$sMethod($mValue);
-			}
-		}
-
-		$oDTValue = DTValue::create()->set_mValue($aData); \MVC\Event::run('DTValidateRequestResponse.__construct.after', $oDTValue);
+		$oDTValue = DTValue::create()->set_mValue($aData); 
+		\MVC\Event::run('DTValidateRequestResponse.__construct.after', $oDTValue);
 	}
 
     /**
-     * @param array $aData
+     * @param array|null $aData
      * @return DTValidateRequestResponse
      * @throws \ReflectionException
      */
-    public static function create(array $aData = array())
-    {
+    public static function create(?array $aData = array())
+    {            
+        (null === $aData) ? $aData = array() : false;
         $oDTValue = DTValue::create()->set_mValue($aData);
 		\MVC\Event::run('DTValidateRequestResponse.create.before', $oDTValue);
-		$oObject = new self($oDTValue->get_mValue());
+		$oObject = new self($oDTValue);
         $oDTValue = DTValue::create()->set_mValue($oObject); \MVC\Event::run('DTValidateRequestResponse.create.after', $oDTValue);
 
         return $oDTValue->get_mValue();
@@ -106,7 +96,7 @@ class DTValidateRequestResponse
         {            
             if (false === ($aData instanceof DTValidateMessage))
             {
-                $mValue[$mKey] = new DTValidateMessage($aData);
+                $mValue[$mKey] = DTValidateMessage::create($aData);
             }
         }
 
@@ -118,16 +108,20 @@ class DTValidateRequestResponse
 	/**
 	 * @param DTValidateMessage $mValue
 	 * @return $this
+	 * @throws \ReflectionException 
 	 */
 	public function add_aMessage(DTValidateMessage $mValue)
 	{
+		$oDTValue = DTValue::create()->set_mValue($this->aMessage); 
+		\MVC\Event::run('DTValidateRequestResponse.add_aMessage.before', $oDTValue);
+
 		$this->aMessage[] = $mValue;
 
 		return $this;
 	}
 
 	/**
-	 * @param array $mValue 
+	 * @param array  $mValue 
 	 * @return $this
 	 * @throws \ReflectionException
 	 */
@@ -135,7 +129,23 @@ class DTValidateRequestResponse
 	{
 		$oDTValue = DTValue::create()->set_mValue($mValue); 
 		\MVC\Event::run('DTValidateRequestResponse.set_aValidationResult.before', $oDTValue);
-		$this->aValidationResult = (array) $oDTValue->get_mValue();
+
+		$this->aValidationResult = $mValue;
+
+		return $this;
+	}
+
+	/**
+	 * @param array $mValue
+	 * @return $this
+	 * @throws \ReflectionException 
+	 */
+	public function add_aValidationResult(array $mValue)
+	{
+		$oDTValue = DTValue::create()->set_mValue($this->aValidationResult); 
+		\MVC\Event::run('DTValidateRequestResponse.add_aValidationResult.before', $oDTValue);
+
+		$this->aValidationResult[] = $mValue;
 
 		return $this;
 	}

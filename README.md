@@ -1,25 +1,20 @@
 
-# Emvicy module OpenApi
+# OpenApi
 
-## Requirements
-
-- Linux
-- php >= 8
-  - `pdo` extension
-- Emvicy 1.x >= `1.13`
-  - see [https://emvicy.com/1.x/installation](https://emvicy.com/1.x/installation)
+a module for Emvicy2 (2.x) PHP Framework: https://github.com/emvicy/Emvicy/tree/2.x
 
 ---
 
 ## Installation
 
+_cd into the modules folder of your `Emvicy` copy; e.g.:_
+~~~bash
+cd /var/www/html/modules/;
+~~~
+
 _git clone_
 ~~~bash
-cd /modules/;
-
-git clone --branch 1.x \
-https://github.com/emvicy/OpenApi.git \
-OpenApi;
+git clone --branch 3.x https://github.com/emvicy/OpenApi.git OpenApi;
 ~~~
 
 ---

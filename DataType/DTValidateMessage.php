@@ -1,5 +1,4 @@
 <?php
-# 2024-02-03 17:32:15
 
 /**
  * @name $OpenApiDataType
@@ -29,41 +28,32 @@ class DTValidateMessage
 
 	/**
 	 * DTValidateMessage constructor.
-	 * @param array $aData
+	 * @param DTValue $oDTValue
 	 * @throws \ReflectionException 
 	 */
-	public function __construct(array $aData = array())
+	protected function __construct(DTValue $oDTValue)
 	{
-		$oDTValue = DTValue::create()->set_mValue($aData);
 		\MVC\Event::run('DTValidateMessage.__construct.before', $oDTValue);
 		$aData = $oDTValue->get_mValue();
-
 		$this->sSubject = null;
 		$this->sBody = null;
+		$this->setProperties($oDTValue);
 
-		foreach ($aData as $sKey => $mValue)
-		{
-			$sMethod = 'set_' . $sKey;
-
-			if (method_exists($this, $sMethod))
-			{
-				$this->$sMethod($mValue);
-			}
-		}
-
-		$oDTValue = DTValue::create()->set_mValue($aData); \MVC\Event::run('DTValidateMessage.__construct.after', $oDTValue);
+		$oDTValue = DTValue::create()->set_mValue($aData); 
+		\MVC\Event::run('DTValidateMessage.__construct.after', $oDTValue);
 	}
 
     /**
-     * @param array $aData
+     * @param array|null $aData
      * @return DTValidateMessage
      * @throws \ReflectionException
      */
-    public static function create(array $aData = array())
-    {
+    public static function create(?array $aData = array())
+    {            
+        (null === $aData) ? $aData = array() : false;
         $oDTValue = DTValue::create()->set_mValue($aData);
 		\MVC\Event::run('DTValidateMessage.create.before', $oDTValue);
-		$oObject = new self($oDTValue->get_mValue());
+		$oObject = new self($oDTValue);
         $oDTValue = DTValue::create()->set_mValue($oObject); \MVC\Event::run('DTValidateMessage.create.after', $oDTValue);
 
         return $oDTValue->get_mValue();
