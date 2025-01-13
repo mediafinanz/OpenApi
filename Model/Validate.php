@@ -66,13 +66,15 @@ class Validate
             $oDTValidateRequestResponse = self::sYamlSourceFail($oDTValidateRequestResponse, $sYamlSource, 'file does not exist: `' . $sYamlSource . '`');
         }
 
+        Log::write($oDTRequestIn->get_requestmethod(), 'debug.log');
+        Log::write(Route::getCurrent()->get_requestMethod(), 'debug.log');
+
         // check request method
-        $bMethodsMatch = (Request::in()->get_requestmethod() === Route::getCurrent()->get_method());
+        $bMethodsMatch = ($oDTRequestIn->get_requestmethod() === Route::getCurrent()->get_requestMethod());
 
         if (false === $bMethodsMatch)
         {
-            $sMessage = 'wrong request method `' . $oDTRequestIn->get_requestmethod() . '`. It has to be: `' . Route::getCurrent()
-                    ->get_method() . '`';
+            $sMessage = 'wrong request method `' . $oDTRequestIn->get_requestmethod() . '`. It has to be: `' . Route::getCurrent()->get_requestMethod() . '`';
             Error::notice($sMessage);
             $oDTValidateRequestResponse->set_bSuccess(false)
                 ->add_aMessage(DTValidateMessage::create()
@@ -161,10 +163,10 @@ class Validate
         $oPsrRequest = new PsrRequest($oDTRequestIn);
         try
         {
-            $aValidationResult = $oOpenApiValidation->validateRequest(// PSR7 Request Object
-                $oPsrRequest, // path as expected in route
-                Route::getCurrent()->get_path(), // Request Method; has to be lowercase
-                strtolower(Route::getCurrent()->get_method()), // remove "_tail" from PathParam Array
+            $aValidationResult = $oOpenApiValidation->validateRequest(  // PSR7 Request Object
+                $oPsrRequest,                                   // path as expected in route
+                Route::getCurrent()->get_path(),                        // Request Method; has to be lowercase
+                strtolower(Route::getCurrent()->get_requestMethod()),   // remove "_tail" from PathParam Array
                 $oPsrRequest->withoutAttribute('_tail')
             );
         }
