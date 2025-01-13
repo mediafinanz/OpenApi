@@ -8,7 +8,7 @@ use HKarlstrom\Middleware\OpenApiValidation\Exception\InvalidOptionException;
 use HKarlstrom\OpenApiReader\OpenApiReader;
 use MVC\Cache;
 use MVC\Config;
-use MVC\DataType\DTRequestCurrent;
+use MVC\DataType\DTRequestIn;
 use MVC\Error;
 use MVC\Event;
 use MVC\File;
@@ -23,14 +23,14 @@ use OpenApi\Model\Validator\Binary;
 class Validate
 {
     /**
-     * @param \MVC\DataType\DTRequestCurrent|null $oDTRequestCurrent
+     * @param \MVC\DataType\DTRequestIn|null $oDTRequestIn
      * @param string                              $sYamlSource file|url
      * @return \OpenApi\DataType\DTValidateRequestResponse
      * @throws \ReflectionException
      * @example {"bSuccess":false,"aMessage":[],"aValidationResult":[{"name":"data.1.contact.city","code":"error_type","value":123,"in":"body","expected":"string","used":"integer"}]}
      * @example {"bSuccess":true,"aMessage":[],"aValidationResult":[]}
      */
-    public static function request(?DTRequestCurrent $oDTRequestCurrent = null, string $sYamlSource = '')
+    public static function request(?DTRequestIn $oDTRequestIn = null, string $sYamlSource = '')
     {
         // Response
         $oDTValidateRequestResponse = DTValidateRequestResponse::create();
@@ -42,11 +42,11 @@ class Validate
         }
 
         // Fallback
-        if (null === $oDTRequestCurrent)
+        if (null === $oDTRequestIn)
         {
-            $sMessage = 'no object of type DTRequestCurrent passed; creating object DTRequestCurrent on Request::getCurrentRequest()';
+            $sMessage = 'no object of type DTRequestIn passed; creating object DTRequestIn on Request::getCurrentRequest()';
             Error::notice($sMessage);
-            $oDTRequestCurrent = Request::getCurrentRequest();
+            $oDTRequestIn = Request::in();
             $oDTValidateRequestResponse->add_aMessage(DTValidateMessage::create()
                 ->set_sSubject('Notice')
                 ->set_sBody($sMessage));
@@ -67,13 +67,11 @@ class Validate
         }
 
         // check request method
-        $bMethodsMatch = (Request::getCurrentRequest()
-                              ->get_requestmethod() === Route::getCurrent()
-                              ->get_method());
+        $bMethodsMatch = (Request::in()->get_requestmethod() === Route::getCurrent()->get_method());
 
         if (false === $bMethodsMatch)
         {
-            $sMessage = 'wrong request method `' . $oDTRequestCurrent->get_requestmethod() . '`. It has to be: `' . Route::getCurrent()
+            $sMessage = 'wrong request method `' . $oDTRequestIn->get_requestmethod() . '`. It has to be: `' . Route::getCurrent()
                     ->get_method() . '`';
             Error::notice($sMessage);
             $oDTValidateRequestResponse->set_bSuccess(false)
@@ -88,7 +86,7 @@ class Validate
         try
         {
             $oOpenApiReader = new OpenApiReader($sYamlSource);
-            $oRequestBody = $oOpenApiReader->getOperationRequestBody($oDTRequestCurrent->get_path(), strtolower($oDTRequestCurrent->get_requestmethod()));
+            $oRequestBody = $oOpenApiReader->getOperationRequestBody($oDTRequestIn->get_path(), strtolower($oDTRequestIn->get_requestmethod()));
 
             // ...if there is any content body
             if (null !== $oRequestBody)
@@ -97,10 +95,10 @@ class Validate
                 $sExpectedType = $oRequestBody->getContent()->type;
 
                 // check content type "json"
-                if (true === (boolean)stristr($sExpectedType, 'json') && false === Strings::isJson($oDTRequestCurrent->get_input()))
+                if (true === (boolean)stristr($sExpectedType, 'json') && false === Strings::isJson($oDTRequestIn->get_input()))
                 {
                     $sMessage = 'content type has to be valid `' . $sExpectedType . '`';
-                    Error::error(json_last_error_msg() . ' on RequestBody of ' . $oDTRequestCurrent->get_path() . ': ' . $sMessage);
+                    Error::error(json_last_error_msg() . ' on RequestBody of ' . $oDTRequestIn->get_path() . ': ' . $sMessage);
                     Error::notice('abort validation of request due to error');
                     $oDTValidateRequestResponse->set_bSuccess(false)
                         ->add_aMessage(DTValidateMessage::create()
@@ -160,7 +158,7 @@ class Validate
         }
 
         // requirement: it has to be Psr7
-        $oPsrRequest = new PsrRequest($oDTRequestCurrent);
+        $oPsrRequest = new PsrRequest($oDTRequestIn);
         try
         {
             $aValidationResult = $oOpenApiValidation->validateRequest(// PSR7 Request Object

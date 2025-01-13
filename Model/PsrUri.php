@@ -2,19 +2,19 @@
 
 namespace OpenApi\Model;
 
-use MVC\DataType\DTRequestCurrent;
+use MVC\DataType\DTRequestIn;
 use Psr\Http\Message\UriInterface;
 
 class PsrUri implements UriInterface
 {
     /**
-     * @var \MVC\DataType\DTRequestCurrent
+     * @var \MVC\DataType\DTRequestIn
      */
-    protected $oDTRequestCurrent;
+    protected $oDTRequestIn;
 
-    public function __construct(DTRequestCurrent $oDTRequestCurrent)
+    public function __construct(DTRequestIn $oDTRequestIn)
     {
-        $this->oDTRequestCurrent = $oDTRequestCurrent;
+        $this->oDTRequestIn = $oDTRequestIn;
     }
 
     /**
@@ -127,7 +127,7 @@ class PsrUri implements UriInterface
      */
     public function getPath()
     {
-        return $this->oDTRequestCurrent->get_path();
+        return $this->oDTRequestIn->get_path();
     }
 
     /**
@@ -318,6 +318,6 @@ class PsrUri implements UriInterface
      */
     public function __toString()
     {
-        return $this->oDTRequestCurrent->get_full();
+        return $this->oDTRequestIn->get_full();
     }
 }

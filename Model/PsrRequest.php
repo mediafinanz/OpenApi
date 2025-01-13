@@ -2,7 +2,7 @@
 
 namespace OpenApi\Model;
 
-use MVC\DataType\DTRequestCurrent;
+use MVC\DataType\DTRequestIn;
 use MVC\Request;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
@@ -11,16 +11,16 @@ use Psr\Http\Message\UriInterface;
 class PsrRequest implements ServerRequestInterface
 {
     /**
-     * @var DTRequestCurrent
+     * @var DTRequestIn
      */
-    protected $oDTRequestCurrent;
+    protected $oDTRequestIn;
 
     /**
-     * @param DTRequestCurrent $oDTRequestCurrent
+     * @param DTRequestIn $oDTRequestIn
      */
-    public function __construct(DTRequestCurrent $oDTRequestCurrent)
+    public function __construct(DTRequestIn $oDTRequestIn)
     {
-        $this->oDTRequestCurrent = $oDTRequestCurrent;
+        $this->oDTRequestIn = $oDTRequestIn;
     }
 
     /**
@@ -401,7 +401,7 @@ class PsrRequest implements ServerRequestInterface
      */
     public function getBody()
     {
-        return $this->oDTRequestCurrent->get_input();
+        return $this->oDTRequestIn->get_input();
     }
 
     /**
@@ -436,7 +436,7 @@ class PsrRequest implements ServerRequestInterface
      */
     public function getMethod()
     {
-        return $this->oDTRequestCurrent->get_requestmethod();
+        return $this->oDTRequestIn->get_requestmethod();
     }
 
     /**
@@ -453,7 +453,7 @@ class PsrRequest implements ServerRequestInterface
      */
     public function getUri()
     {
-        return new PsrUri($this->oDTRequestCurrent);
+        return new PsrUri($this->oDTRequestIn);
     }
 
     /**
