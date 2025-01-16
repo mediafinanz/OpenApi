@@ -66,9 +66,6 @@ class Validate
             $oDTValidateRequestResponse = self::sYamlSourceFail($oDTValidateRequestResponse, $sYamlSource, 'file does not exist: `' . $sYamlSource . '`');
         }
 
-        Log::write($oDTRequestIn->get_requestmethod(), 'debug.log');
-        Log::write(Route::getCurrent()->get_requestMethod(), 'debug.log');
-
         // check request method
         $bMethodsMatch = ($oDTRequestIn->get_requestmethod() === Route::getCurrent()->get_requestMethod());
 
